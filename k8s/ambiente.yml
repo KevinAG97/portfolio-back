@@ -1,0 +1,86 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: $DEPLOYMENT-service
+  namespace: $NAMESPACE
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8000
+    protocol: TCP
+  selector:
+    app: $DEPLOYMENT-app
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: $DEPLOYMENT-app
+  namespace: $NAMESPACE
+  labels:
+    app: $DEPLOYMENT-app
+spec:
+  selector:
+    matchLabels:
+      app: $DEPLOYMENT-app
+  replicas: 1
+  revisionHistoryLimit: 2
+  minReadySeconds: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: $DEPLOYMENT-app
+    spec:
+      containers:
+      # - name: nginx
+      #   image: nginx:stable
+      #   ports:
+      #   - containerPort: 80
+      #   volumeMounts:
+        # - name: app-data
+        #   mountPath: "/webapps"
+        # - name: nginx-config-volume
+        #   mountPath: /etc/nginx/nginx.conf
+        #   subPath: nginx.conf
+      - name: $CONTAINER_NAME
+        image: $IMAGE:$IMAGE_TAG
+        readinessProbe:
+          tcpSocket:
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        #Ele faz o teste de tempos em tempos
+        livenessProbe:
+          tcpSocket:
+            port: 8000
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        ports:
+        - containerPort: 8000
+        # volumeMounts:
+        # - name: app-data
+        #   mountPath: "/webapps"
+        command: ["/bin/sh", "-c", "gunicorn -b :8000 core.wsgi:application --timeout 1200"]
+        # command: ["/bin/sh", "-c", "set -o allexport && source .env && set +o allexport && gunicorn -b :8000 core.wsgi:application --timeout 1200"]
+        # command: ["/bin/sh", "-c", "pipenv run python manage.py migrate"]
+      # initContainers:
+      # - name: setup
+      #   image: $IMAGE:latest
+      #   command: ["/bin/sh", "-c", "cp -Rf /webapps/. /srv/app"]
+      #   # imagePullPolicy: Always
+      #   volumeMounts:
+      #   - name: app-data
+      #     mountPath: "/srv/app"
+      # volumes:
+        # - name: app-data
+        #   emptyDir: {}
+        # - name: nginx-config-volume
+        #   configMap:
+        #     name: nginx-$DEPLOYMENT
+

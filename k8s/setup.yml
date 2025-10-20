@@ -1,0 +1,91 @@
+#
+# CRIAÇÃO  DO NAMESPACE DO PROJETO
+#
+apiVersion: v1
+kind: Namespace
+metadata:
+    name: $NAMESPACE
+    labels:
+        name: $NAMESPACE
+
+---
+#
+# CRIAÇÃO DO CERTIFICADO
+#
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: $NAMESPACE-$APP_NAME-tls
+  namespace: $NAMESPACE
+spec:
+  secretName: $NAMESPACE-$APP_NAME-tls
+  duration: 2160h # 90 dias
+  renewBefore: 360h # 15 dias
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  dnsNames:
+  - '$APP_DOMAIN'
+  - 'hml.$APP_DOMAIN'
+  - 'dev.$APP_DOMAIN'
+---
+#
+# CONFIGURAÇÃO DO INGRESS JÁ CARREGANDO OS CERTIFICADOS
+#
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-$NAMESPACE-$APP_NAME
+  namespace: $NAMESPACE
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "PUT, GET, PATCH, POST, OPTIONS, DELETE"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "*"
+    #nginx.ingress.kubernetes.io/rewrite-target: /
+    certmanager.k8s.io/cluster-issuer: 'letsencrypt-prod'
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/secure-backends: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "6000"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "6000"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "6000"
+  labels:
+    app: nginx
+spec:
+  tls:
+  - hosts:
+    - $APP_DOMAIN
+    secretName: $NAMESPACE-$APP_NAME-tls
+  rules:
+  - host: $APP_DOMAIN
+    http:
+        paths:
+        - backend:
+            service:
+              name: prd-$NAMESPACE-$APP_NAME-service
+              port:
+                number: 80
+          pathType: Prefix
+          path: /
+  - host: hml.$APP_DOMAIN
+    http:
+        paths:
+        - backend:
+              service:
+                name: hml-$NAMESPACE-$APP_NAME-service
+                port:
+                  number: 80
+          pathType: Prefix
+          path: /
+  - host: dev.$APP_DOMAIN
+    http:
+        paths:
+        - backend:
+              service:
+                name: dev-$NAMESPACE-$APP_NAME-service
+                port:
+                  number: 80
+          pathType: Prefix
+          path: /
