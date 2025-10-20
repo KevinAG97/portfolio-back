@@ -40,11 +40,11 @@ class UserManager(BaseUserManager):
     
 class ProfileType(models.Model):
     ADMIN = 1
-    RECEPCIONIST = 2
+    GUEST = 2
 
     ROLE_CHOICES = (
       (ADMIN, 'admin'),
-      (RECEPCIONIST, 'receptionist')
+      (GUEST, 'guest')
   )
 
     profile_type = models.PositiveSmallIntegerField(choices=ROLE_CHOICES)
@@ -62,7 +62,6 @@ class CustomUser(AbstractUser):
     username = None
     date_joined = models.DateTimeField(auto_now_add=True)
     profile_type = models.ManyToManyField(ProfileType, blank=False, related_name='user_profile_type')
-    password = models.CharField(max_length=255, blank=True)
     photo = models.ImageField(upload_to=user_photo, blank=True, null=True)
     
     USERNAME_FIELD = 'email'

