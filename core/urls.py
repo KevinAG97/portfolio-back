@@ -10,8 +10,6 @@ from rest_framework import permissions
 from drf_yasg.generators import OpenAPISchemaGenerator
 from rest_framework_extensions.routers import NestedRouterMixin
 from users.views import UserViewSet, ChangePasswordView
-from import_data.views import ImportDataViewSet
-from pacientes.views import PacientesViewSet
 from core.views import CustomLogoutView
 from django.conf import settings
 from django.conf.urls.static import static
@@ -43,8 +41,8 @@ class NestedDefaultRouter(NestedRouterMixin, DefaultRouter):
 
 ROUTER = NestedDefaultRouter()
 ROUTER.register('users', UserViewSet, basename='users')
-ROUTER.register('import-data', ImportDataViewSet, basename='import-data')
-ROUTER.register('pacientes', PacientesViewSet, basename='pacientes')
+#ROUTER.register('import-data', ImportDataViewSet, basename='import-data')
+#ROUTER.register('pacientes', PacientesViewSet, basename='pacientes')
 
 urlpatterns = [
     path('api/v1/users/create/', UserViewSet.as_view({'post': 'create'}), name='user-create'),
